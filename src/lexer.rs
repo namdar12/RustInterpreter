@@ -37,10 +37,16 @@ impl lexer {
             '=' => {tok.kind = TokenKind::Assign; tok.value = self.ch.to_string();},
             ';' => {tok.kind = TokenKind::Semicolon; tok.value = self.ch.to_string();},
             ',' => {tok.kind = TokenKind::Comma; tok.value = self.ch.to_string();},
+            '\0' => {tok.kind = TokenKind::EOF; tok.value = "".to_string();}
 
+            _ => {
+                if self.is_letter(){
+                    {tok.value = self.read_identifier()}
+                }else{
+                    {tok.kind = TokenKind::Illegal; tok.value = self.ch.to_string();}
+                }
 
-            _ => {tok.kind = TokenKind::EOF; tok.value = "".to_string() ;},
-
+            }
 
         }
 
@@ -49,7 +55,20 @@ impl lexer {
    
     }
 
-}
+    pub fn is_letter(&self) -> bool{
+        return 'a' <=self.ch && self.ch <='z' || 'A' <=self.ch && self.ch <='Z' || self.ch == '_'
+    }
+
+    pub fn read_identifier(&mut self)-> String{
+        let position = self.position;
+        while self.is_letter() {
+            self.read_char();
+        }
+        self.input.chars().skip(position).take(self.position - position).collect()
+    }
+
+    }
+
 
 
 
@@ -132,7 +151,7 @@ mod test{
                 value: "".to_string(),
             } ];
     
-        let mut l = new("test".to_string());
+        let mut l = new(input);
     
         //ask about this
         for (i,  tt) in expected.iter().enumerate() {
@@ -144,6 +163,5 @@ mod test{
     
         }
     
-        
     }
 }
