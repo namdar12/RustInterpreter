@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
+
 pub enum TokenKind {
     Illegal,
     EOF,
@@ -48,12 +49,11 @@ impl TokenKind{
         
     }
 
-    pub fn look_up_ident(&self,ident: String) -> Token{
+    pub fn look_up_ident(&self,ident: String) -> Option<TokenKind>{
         let keywords = self.get_keywords();
-        let tok = Token{kind: TokenKind::Ident, value: "let".to_string()};
         match keywords.get(&ident) {
-            Some(token_type) => tok.clone(),  // assuming TokenType implements Clone
-            None => tok,
+            Some(TokenKind) => Some(*TokenKind) ,  // assuming TokenType implements Clone
+            None => None,
         }
     }
 }
