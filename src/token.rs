@@ -1,11 +1,19 @@
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 
+use lazy_static::lazy_static;
 
-#[derive(PartialEq)]
-#[derive(Debug)]
-#[derive(Clone, Copy)]
+lazy_static! {
+    static ref TOKEN_LITERAL_MAP: HashMap<String, TokenKind> = {
+        let mut map = HashMap::new();
+        map.insert("let".to_owned(), TokenKind::Let);
+        map.insert("fn".to_owned(), TokenKind::Function);
 
+        map
+    };
+}
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone, Copy)]
 pub enum TokenKind {
     Illegal,
     EOF,
@@ -20,11 +28,10 @@ pub enum TokenKind {
     Lbrace,
     Rbrace,
     Function,
-    Let
+    Let,
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
     pub value: String,
@@ -32,29 +39,20 @@ pub struct Token {
 
 impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)  // or provide a custom representation
-    }
-
-}
-
-impl TokenKind{
-    pub fn get_keywords(&self) -> HashMap<String, TokenKind> {
-        let initial_values= vec![
-            ("fn".to_string(), TokenKind::Function),
-            ("let".to_string(), TokenKind::Let),
-        ];
-
-        let hash = initial_values.into_iter().collect();
-        return hash
-        
-    }
-
-    pub fn look_up_ident(&self,ident: String) -> Option<TokenKind>{
-        let keywords = self.get_keywords();
-        match keywords.get(&ident) {
-            Some(TokenKind) => Some(*TokenKind) ,  // assuming TokenType implements Clone
-            None => None,
-        }
+        write!(f, "{:?}", self) // or provide a custom representation
     }
 }
 
+impl From<&str> for TokenKind {
+    fn from(value: &str) -> Self {
+        TOKEN_LITERAL_MAP
+            .get(value)
+            .map(|kind| kind.to_owned())
+            .unwrap_or(Self::Ident)
+    }
+}
+
+fn temp() {
+    let kind_1 = TokenKind::from("let");
+    let kind_2 = TokenKind::from("hello");
+}

@@ -1,18 +1,29 @@
-use std::{ops::IndexMut, str::Bytes,char};
-
 use crate::token::{Token, TokenKind};
+use std::char;
 
-pub struct lexer {
+pub struct Lexer {
     input: String,
     position: usize,
     read_position: usize,
     ch: char,
 }
 
-impl lexer {
+impl Lexer {
+    pub fn new(input: String) -> Self {
+        let mut lex = Lexer {
+            input: input.clone(),
+            position: 0,
+            read_position: 1,
+            ch: input.as_bytes()[0] as char,
+        };
+        lex.read_char();
+
+        lex
+    }
+
     pub fn read_char(&mut self) {
         if self.read_position >= self.input.len() {
-            self.ch = '\0'; 
+            self.ch = '\0';
         } else {
             self.ch = self.input.as_bytes()[self.read_position] as char
         }
@@ -21,64 +32,86 @@ impl lexer {
     }
 
     pub fn next_token(&mut self) -> Token {
-        
-        let mut tok = Token{
+        let mut tok = Token {
             kind: TokenKind::EOF,
             value: String::from(""),
         };
 
         match self.ch {
-
-            '(' => {tok.kind = TokenKind::Lparen; tok.value = self.ch.to_string();},
-            ')' => {tok.kind = TokenKind::Rparen; tok.value = self.ch.to_string();},
-            '{' => {tok.kind = TokenKind::Lbrace; tok.value = self.ch.to_string();},
-            '}' => {tok.kind = TokenKind::Rbrace; tok.value = self.ch.to_string();},
-            '+' => {tok.kind = TokenKind::Plus; tok.value = self.ch.to_string();},
-            '=' => {tok.kind = TokenKind::Assign; tok.value = self.ch.to_string();},
-            ';' => {tok.kind = TokenKind::Semicolon; tok.value = self.ch.to_string();},
-            ',' => {tok.kind = TokenKind::Comma; tok.value = self.ch.to_string();},
-            '\0' => {tok.kind = TokenKind::EOF; tok.value = "".to_string();}
-
-            _ => {
-                if self.is_letter(){
-                    {tok.value = self.read_identifier()}
-                }else{
-                    {tok.kind = TokenKind::Illegal; tok.value = self.ch.to_string();}
-                }
-
+            '(' => {
+                tok.kind = TokenKind::Lparen;
+                tok.value = self.ch.to_string();
+            }
+            ')' => {
+                tok.kind = TokenKind::Rparen;
+                tok.value = self.ch.to_string();
+            }
+            '{' => {
+                tok.kind = TokenKind::Lbrace;
+                tok.value = self.ch.to_string();
+            }
+            '}' => {
+                tok.kind = TokenKind::Rbrace;
+                tok.value = self.ch.to_string();
+            }
+            '+' => {
+                tok.kind = TokenKind::Plus;
+                tok.value = self.ch.to_string();
+            }
+            '=' => {
+                tok.kind = TokenKind::Assign;
+                tok.value = self.ch.to_string();
+            }
+            ';' => {
+                tok.kind = TokenKind::Semicolon;
+                tok.value = self.ch.to_string();
+            }
+            ',' => {
+                tok.kind = TokenKind::Comma;
+                tok.value = self.ch.to_string();
+            }
+            '\0' => {
+                tok.kind = TokenKind::EOF;
+                tok.value = "".to_string();
             }
 
+            _ => {
+                if self.is_letter() {
+                    {
+                        tok.value = self.read_identifier()
+                    }
+                } else {
+                    {
+                        tok.kind = TokenKind::Illegal;
+                        tok.value = self.ch.to_string();
+                    }
+                }
+            }
         }
 
         self.read_char();
-        return tok
-   
+        return tok;
     }
 
-    pub fn is_letter(&self) -> bool{
-        return 'a' <=self.ch && self.ch <='z' || 'A' <=self.ch && self.ch <='Z' || self.ch == '_'
+    pub fn is_letter(&self) -> bool {
+        return 'a' <= self.ch && self.ch <= 'z'
+            || 'A' <= self.ch && self.ch <= 'Z'
+            || self.ch == '_';
     }
 
-    pub fn read_identifier(&mut self)-> String{
+    pub fn read_identifier(&mut self) -> String {
         let position = self.position;
         while self.is_letter() {
             self.read_char();
         }
-        self.input.chars().skip(position).take(self.position - position).collect()
+
+        self.input
+            .chars()
+            .skip(position)
+            .take(self.position - position)
+            .collect()
     }
-
-    }
-
-
-
-
-pub fn new(input: String) -> lexer {
-   let mut lex = lexer {input: input.clone(), position: 0, read_position: 1, ch: input.as_bytes()[0] as char };
-   lex.read_char();
-   return lex
 }
-
-
 
 /*
 pub fn add(x:u8, y:u8) -> u8 {
@@ -104,19 +137,17 @@ mod test {
 }
 */
 
-mod test{
-    use super::lexer;
+mod test {
+    use super::Lexer;
     use crate::token::{Token, TokenKind};
-    use super::new;
 
     #[test]
-    pub fn test_next_token(){
+    fn test_next_token() {
         let input = String::from("=+(){},;");
-    
         let expected = vec![
-            Token { 
-                kind: TokenKind::Assign, 
-                value: "=".to_string() 
+            Token {
+                kind: TokenKind::Assign,
+                value: "=".to_string(),
             },
             Token {
                 kind: TokenKind::Plus,
@@ -149,19 +180,40 @@ mod test{
             Token {
                 kind: TokenKind::EOF,
                 value: "".to_string(),
-            } ];
-    
-        let mut l = new(input);
-    
+            },
+        ];
+
+        // let mut l = new(input);
+        let mut l = Lexer::new(input);
+
         //ask about this
-        for (i,  tt) in expected.iter().enumerate() {
-    
+        for (i, tt) in expected.iter().enumerate() {
             let tok = l.next_token();
-    
-            assert_eq!(tok.kind, tt.kind, "Test[{}] - tokentype wrong. expected={}, got={}", i, tt.kind, tok.kind);
-            assert_eq!(tok.value, tt.value, "Test[{}] - literal wrong. expected={}, got={}", i, tt.value, tok.value);
-    
+
+            assert_eq!(
+                tok.kind, tt.kind,
+                "Test[{}] - tokentype wrong. expected={}, got={}",
+                i, tt.kind, tok.kind
+            );
+
+            assert_eq!(
+                tok.value, tt.value,
+                "Test[{}] - literal wrong. expected={}, got={}",
+                i, tt.value, tok.value
+            );
         }
-    
+    }
+
+    #[test]
+    fn identifier() {
+        let input = "hello";
+        let expected = Token {
+            kind: TokenKind::Ident,
+            value: input.to_owned(),
+        };
+
+        let mut lexer = Lexer::new(input.to_owned());
+
+        assert_eq!(lexer.next_token(), expected);
     }
 }
