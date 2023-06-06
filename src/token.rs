@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum TokenKind {
     Illegal,
     EOF,
@@ -22,6 +23,7 @@ pub enum TokenKind {
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Token {
     pub kind: TokenKind,
     pub value: String,
@@ -37,8 +39,8 @@ impl fmt::Display for TokenKind {
 impl TokenKind{
     pub fn get_keywords(&self) -> HashMap<String, TokenKind> {
         let initial_values= vec![
-            ("fn", TokenKind::Function),
-            ("let", TokenKind::Let),
+            ("fn".to_string(), TokenKind::Function),
+            ("let".to_string(), TokenKind::Let),
         ];
 
         let hash = initial_values.into_iter().collect();
@@ -46,15 +48,13 @@ impl TokenKind{
         
     }
 
-    pub fn look_up_ident(&self,ident: String) -> TokenKind {
+    pub fn look_up_ident(&self,ident: String) -> Token{
         let keywords = self.get_keywords();
-
+        let tok = Token{kind: TokenKind::Ident, value: "let".to_string()};
         match keywords.get(&ident) {
-            Some(token_type) =>  1000, //token_type.clone(),  // assuming TokenType implements Clone
-            None => 1000,
-        };
-
-        return TokenKind::Assign
+            Some(token_type) => tok.clone(),  // assuming TokenType implements Clone
+            None => tok,
+        }
     }
 }
 
