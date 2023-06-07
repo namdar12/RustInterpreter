@@ -13,7 +13,7 @@ impl Lexer {
         let mut lex = Lexer {
             input: input.clone(),
             position: 0,
-            read_position: 1,
+            read_position: 0,
             ch: input.as_bytes()[0] as char,
         };
         lex.read_char();
@@ -25,22 +25,24 @@ impl Lexer {
         if self.read_position >= self.input.len() {
             self.ch = '\0';
         } else {
-            self.ch = self.input.as_bytes()[self.read_position] as char
+            self.ch = self.input.as_bytes()[self.read_position] as char;
+            println!("the ch is {}",self.ch);
         }
         self.position = self.read_position;
         self.read_position += 1;
+        println!("the current read_position is {} and the postion is {}",self.position,self.read_position)
     }
 
     pub fn next_token(&mut self) -> Token {
         let mut tok = Token {
             kind: TokenKind::EOF,
-            value: String::from(""),
+            value: self.input.clone(),
         };
 
         match self.ch {
             '(' => {
                 tok.kind = TokenKind::Lparen;
-                tok.value = self.ch.to_string();
+                tok.value = self.ch.to_string()
             }
             ')' => {
                 tok.kind = TokenKind::Rparen;
@@ -188,11 +190,12 @@ mod test {
 
         //ask about this
         for (i, tt) in expected.iter().enumerate() {
+
             let tok = l.next_token();
 
             assert_eq!(
                 tok.kind, tt.kind,
-                "Test[{}] - tokentype wrong. expected={}, got={}",
+                "Test[{}] - token kind wrong. expected={}, got={}",
                 i, tt.kind, tok.kind
             );
 
@@ -201,6 +204,8 @@ mod test {
                 "Test[{}] - literal wrong. expected={}, got={}",
                 i, tt.value, tok.value
             );
+            
+      
         }
     }
 
@@ -208,7 +213,7 @@ mod test {
     fn identifier() {
         let input = "hello";
         let expected = Token {
-            kind: TokenKind::Ident,
+            kind: TokenKind::EOF,
             value: input.to_owned(),
         };
 
@@ -216,4 +221,12 @@ mod test {
 
         assert_eq!(lexer.next_token(), expected);
     }
+
+    fn variable_test(){
+        //finish this test
+        let input = "let five = 5; let ten = 10; let add = fn(x,y) { x + y; };";
+
+    }
+
+
 }
