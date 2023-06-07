@@ -222,9 +222,137 @@ mod test {
         assert_eq!(lexer.next_token(), expected);
     }
 
+    #[test]
     fn variable_test(){
         //finish this test
         let input = "let five = 5; let ten = 10; let add = fn(x,y) { x + y; };";
+        let expected = vec![
+        Token {
+            kind: TokenKind::Let,
+            value: "let".to_owned(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "five".to_string(),
+        },
+        Token {
+            kind: TokenKind::Assign,
+            value: "=".to_string(),
+        },
+        Token {
+            kind: TokenKind::Int,
+            value: "5".to_string(),
+        },
+        Token {
+            kind: TokenKind::Lbrace,
+            value: "{".to_string(),
+        },
+        Token {
+            kind: TokenKind::Rbrace,
+            value: "}".to_string(),
+        },
+        Token {
+            kind: TokenKind::Comma,
+            value: ",".to_string(),
+        },
+        Token {
+            kind: TokenKind::Semicolon,
+            value: ";".to_string(),
+        },
+        Token {
+            kind: TokenKind::EOF,
+            value: "".to_string(),
+        },
+        Token {
+            kind: TokenKind::Semicolon,
+            value: ";".to_owned(),
+        },
+        Token {
+            kind: TokenKind::Let,
+            value: "let".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "ten".to_string(),
+        },
+        Token {
+            kind: TokenKind::Assign,
+            value: "=".to_string(),
+        },
+        Token {
+            kind: TokenKind::Int,
+            value: "10".to_string(),
+        },
+        Token {
+            kind: TokenKind::Semicolon,
+            value: ";".to_string(),
+        },
+        Token {
+            kind: TokenKind::Let,
+            value: "let".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "add".to_string(),
+        },
+        Token {
+            kind: TokenKind::Assign,
+            value: "=".to_string(),
+        },
+        Token {
+            kind: TokenKind::Function,
+            value: "fn".to_string(),
+        },
+        Token {
+            kind: TokenKind::Lparen,
+            value: "(".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "x".to_string(),
+        },
+        Token {
+            kind: TokenKind::Comma,
+            value: ",".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "y".to_string(),
+        },
+        Token {
+            kind: TokenKind::Rparen,
+            value: ")".to_string(),
+        },
+        Token {
+            kind: TokenKind::Lbrace,
+            value: "{".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "x".to_string(),
+        },
+        Token {
+            kind: TokenKind::Plus,
+            value: "+".to_string(),
+        },
+        Token {
+            kind: TokenKind::Ident,
+            value: "y".to_string(),
+        },
+        Token {
+            kind: TokenKind::Semicolon,
+            value: ";".to_string(),
+        },
+        Token {
+            kind: TokenKind::Rbrace,
+            value: "}".to_string(),
+        },
+        Token {
+            kind: TokenKind::Semicolon,
+            value: ";".to_string(),
+        },
+        ];
+
 
     }
 
