@@ -26,11 +26,9 @@ impl Lexer {
             self.ch = '\0';
         } else {
             self.ch = self.input.as_bytes()[self.read_position] as char;
-            println!("the ch is {}",self.ch);
         }
         self.position = self.read_position;
         self.read_position += 1;
-        println!("the current read_position is {} and the postion is {}",self.position,self.read_position)
     }
 
     pub fn read_number(&mut self) -> String {
@@ -43,6 +41,7 @@ impl Lexer {
     }
 
     pub fn skip_white_space(&mut self){
+        println!("Skipped");
         while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
             self.read_char();
         }
@@ -143,8 +142,6 @@ impl Lexer {
                 tok.kind = TokenKind::EOF;
                 tok.value = "".to_string();
             }
-
-
             _ => {
                 if self.is_letter() {
                     {
@@ -242,7 +239,7 @@ mod test {
     }
 
     #[test]
-    fn identifier() {
+    fn identifier_test() {
         let input = "hello";
         let expected = Token {
             kind: TokenKind::Ident,
@@ -257,14 +254,14 @@ mod test {
     #[test]
     fn variable_test(){
         //finish this test
-        let input = "let five = 5; 
+        let input = "let five = 5 ;
         
-        let ten = 10; 
+        let ten = 10 ; 
         
         let add = fn(x,y) 
         { x + y;
         
-         };";
+        } ;";
         let expected = vec![
         Token {
             kind: TokenKind::Let,
@@ -281,30 +278,10 @@ mod test {
         Token {
             kind: TokenKind::Int,
             value: "5".to_string(),
-        },
-        Token {
-            kind: TokenKind::Lbrace,
-            value: "{".to_string(),
-        },
-        Token {
-            kind: TokenKind::Rbrace,
-            value: "}".to_string(),
-        },
-        Token {
-            kind: TokenKind::Comma,
-            value: ",".to_string(),
-        },
+        }, 
         Token {
             kind: TokenKind::Semicolon,
             value: ";".to_string(),
-        },
-        Token {
-            kind: TokenKind::EOF,
-            value: "".to_string(),
-        },
-        Token {
-            kind: TokenKind::Semicolon,
-            value: ";".to_owned(),
         },
         Token {
             kind: TokenKind::Let,
