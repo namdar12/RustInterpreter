@@ -390,7 +390,60 @@ mod test {
             kind: TokenKind::Semicolon,
             value: ";".to_string(),
         }];
+
+        let mut l = Lexer::new(input.to_owned());
+
+        //ask about this
+        for (i, tt) in expected.iter().enumerate() {
+
+            let tok = l.next_token();
+
+            assert_eq!(
+                tok.kind, tt.kind,
+                "Test[{}] - token kind wrong. expected={}, got={}",
+                i, tt.kind, tok.kind
+            );
+
+            assert_eq!(
+                tok.value, tt.value,
+                "Test[{}] - literal wrong. expected={}, got={}",
+                i, tt.value, tok.value
+            );
+            
+        }
+
+
+
+
     }
+
+
+    // fn test_peeker(){
+    //     let input = " 10 == 10; 10 != 9";
+
+    //     let mut l = Lexer::new(input.to_owned());
+
+    //     //ask about this
+    //     for (i, tt) in expected.iter().enumerate() {
+
+    //         let tok = l.next_token();
+
+    //         assert_eq!(
+    //             tok.kind, tt.kind,
+    //             "Test[{}] - token kind wrong. expected={}, got={}",
+    //             i, tt.kind, tok.kind
+    //         );
+
+    //         assert_eq!(
+    //             tok.value, tt.value,
+    //             "Test[{}] - literal wrong. expected={}, got={}",
+    //             i, tt.value, tok.value
+    //         );
+            
+      
+    //     }
+
+    //}
 
 
 }
