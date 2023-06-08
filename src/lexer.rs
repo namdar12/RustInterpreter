@@ -33,11 +33,62 @@ impl Lexer {
         println!("the current read_position is {} and the postion is {}",self.position,self.read_position)
     }
 
+    pub fn read_number(&mut self) -> String {
+        let position = self.position;
+        while self.is_digit(){
+            self.read_char()
+        }
+        self.input[position..self.position].to_owned()
+
+    }
+
+    pub fn skip_white_space(&mut self){
+        while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
+            self.read_char();
+        }
+    }
+
+    pub fn is_letter(&self) -> bool {
+        return 'a' <= self.ch && self.ch <= 'z'
+            || 'A' <= self.ch && self.ch <= 'Z'
+            || self.ch == '_';
+    }
+
+    pub fn is_digit(&self) -> bool{
+        self.ch >= '0' && self.ch <= '9'
+    }
+
+
+    pub fn read_identifier(&mut self) -> String {
+        let position = self.position;
+        while self.is_letter() {
+            self.read_char();
+        }
+
+        self.input
+            .chars()
+            .skip(position)
+            .take(self.position - position)
+            .collect()
+    }
+
+    pub fn peek_char(&mut self) -> char{
+        if self.read_position >= self.input.len(){
+            return '\0';
+        }else{
+            return self.input.as_bytes()[self.read_position] as char;
+        }
+
+
+    }
+
     pub fn next_token(&mut self) -> Token {
         let mut tok = Token {
             kind: TokenKind::EOF,
             value: self.input.clone(),
         };
+
+        self.skip_white_space();
 
         match self.ch {
             '(' => {
@@ -61,8 +112,14 @@ impl Lexer {
                 tok.value = self.ch.to_string();
             }
             '=' => {
-                tok.kind = TokenKind::Assign;
-                tok.value = self.ch.to_string();
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    tok.value = "==".to_owned();
+                    tok.kind = TokenKind::EQ;
+                }else{
+                    tok.kind = TokenKind::Assign;
+                    tok.value = self.ch.to_string();
+                } 
             }
             ';' => {
                 tok.kind = TokenKind::Semicolon;
@@ -72,17 +129,34 @@ impl Lexer {
                 tok.kind = TokenKind::Comma;
                 tok.value = self.ch.to_string();
             }
+            '!' =>{
+                if self.peek_char() == '!' {
+                    self.read_char();
+                    tok.value = "!=".to_owned();
+                    tok.kind = TokenKind::NotEq;
+                }else{
+                    tok.kind = TokenKind::Bang;
+                    tok.value = self.ch.to_string();
+                } 
+            }
             '\0' => {
                 tok.kind = TokenKind::EOF;
                 tok.value = "".to_string();
             }
 
+
             _ => {
                 if self.is_letter() {
                     {
-                        tok.value = self.read_identifier()
+                        tok.value = self.read_identifier();
+                        tok.kind = TokenKind::from(tok.value.as_str());
                     }
-                } else {
+                } else if self.is_digit() {
+                    {
+                        tok.value = self.read_number();
+                        tok.kind = TokenKind::Int;
+                    }
+                }else {
                     {
                         tok.kind = TokenKind::Illegal;
                         tok.value = self.ch.to_string();
@@ -92,52 +166,10 @@ impl Lexer {
         }
 
         self.read_char();
-        return tok;
+        tok
     }
-
-    pub fn is_letter(&self) -> bool {
-        return 'a' <= self.ch && self.ch <= 'z'
-            || 'A' <= self.ch && self.ch <= 'Z'
-            || self.ch == '_';
-    }
-
-    pub fn read_identifier(&mut self) -> String {
-        let position = self.position;
-        while self.is_letter() {
-            self.read_char();
-        }
-
-        self.input
-            .chars()
-            .skip(position)
-            .take(self.position - position)
-            .collect()
-    }
+    
 }
-
-/*
-pub fn add(x:u8, y:u8) -> u8 {
-    x + y
-}
-
-mod test {
-    use super::add;
-
-    #[test]
-    fn add_works() {
-        let (x, y) = (1,2 );
-        let expected = 3;
-        let output = add(x,y);
-
-        assert_eq!(expected, output);
-    }
-
-    #[test]
-    fn add_fails() {
-        add(200, 100);
-    }
-}
-*/
 
 mod test {
     use super::Lexer;
@@ -213,7 +245,7 @@ mod test {
     fn identifier() {
         let input = "hello";
         let expected = Token {
-            kind: TokenKind::EOF,
+            kind: TokenKind::Ident,
             value: input.to_owned(),
         };
 
@@ -225,7 +257,14 @@ mod test {
     #[test]
     fn variable_test(){
         //finish this test
-        let input = "let five = 5; let ten = 10; let add = fn(x,y) { x + y; };";
+        let input = "let five = 5; 
+        
+        let ten = 10; 
+        
+        let add = fn(x,y) 
+        { x + y;
+        
+         };";
         let expected = vec![
         Token {
             kind: TokenKind::Let,
@@ -350,10 +389,7 @@ mod test {
         Token {
             kind: TokenKind::Semicolon,
             value: ";".to_string(),
-        },
-        ];
-
-
+        }];
     }
 
 

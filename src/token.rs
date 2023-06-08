@@ -8,6 +8,13 @@ lazy_static! {
         let mut map = HashMap::new();
         map.insert("let".to_owned(), TokenKind::Let);
         map.insert("fn".to_owned(), TokenKind::Function);
+        map.insert("true".to_owned(),TokenKind::True);
+        map.insert("false".to_owned(),TokenKind::False);
+        map.insert("if".to_owned(),TokenKind::If);
+        map.insert("else".to_owned(),TokenKind::Else);
+        map.insert("return".to_owned(),TokenKind::Return);
+        map.insert("==".to_owned(), TokenKind::EQ);
+        map.insert("!=".to_owned(),TokenKind::NotEq);
 
         map
     };
@@ -29,6 +36,14 @@ pub enum TokenKind {
     Rbrace,
     Function,
     Let,
+    True, 
+    False,
+    If, 
+    Else,
+    Return,
+    EQ,
+    NotEq,
+    Bang
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -44,7 +59,7 @@ impl fmt::Display for TokenKind {
 }
 
 impl From<&str> for TokenKind {
-    fn from(value: &str) -> Self {
+    fn from(value: &str) -> TokenKind{
         TOKEN_LITERAL_MAP
             .get(value)
             .map(|kind| kind.to_owned())
