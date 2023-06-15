@@ -1,216 +1,148 @@
-use crate::token::{Token, TokenKind};
-use std::char;
+use crate::token::{Token, TokenType};
+use std::{char, ops::IndexMut, str::Bytes,str};
 
-pub struct Lexer {
-    input: String,
+use crate::error::{Result, Error};
+
+//pub use error::{Error, Result};
+
+pub struct Lexer{
+    input: Vec<u8>,
     position: usize,
     read_position: usize,
-    ch: char,
+    ch: u8,
 }
 
-impl Lexer {
-    pub fn new(input: String) -> Self {
-        let mut lex = Lexer {
-            input: input.clone(),
-            position: 0,
-            read_position: 0,
-            ch: input.as_bytes()[0] as char,
-        };
-        lex.read_char();
 
+impl Lexer {
+    pub fn new(input: String) -> Lexer{
+
+        let lex = Lexer { 
+             input: input.clone().into_bytes(),
+             position: 0, 
+             read_position: 0, 
+             ch: 0 
+            };
         lex
     }
 
-    pub fn read_char(&mut self) {
-        if self.read_position >= self.input.len() {
-            self.ch = '\0';
-        } else {
-            self.ch = self.input.as_bytes()[self.read_position] as char;
+    pub fn read_char(&mut self){
+        if self.read_position >= self.input.len(){
+            self.ch =0
+        }else{
+            self.ch = self.input[self.read_position]
         }
         self.position = self.read_position;
-        self.read_position += 1;
+        self.read_position +=1
     }
 
-    pub fn read_number(&mut self) -> String {
-        let position = self.position;
-        while self.is_digit(){
-            self.read_char()
-        }
-        self.input[position..self.position].to_owned()
-
+    pub fn is_letter(& self) -> bool{
+        self.ch.is_ascii_alphabetic() || self.ch == b'_'
     }
-
-    pub fn skip_white_space(&mut self){
-        println!("Skipped");
-        while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
-            self.read_char();
-        }
-    }
-
-    pub fn is_letter(&self) -> bool {
-        return 'a' <= self.ch && self.ch <= 'z'
-            || 'A' <= self.ch && self.ch <= 'Z'
-            || self.ch == '_';
-    }
-
-    pub fn is_digit(&self) -> bool{
-        self.ch >= '0' && self.ch <= '9'
-    }
-
 
     pub fn read_identifier(&mut self) -> String {
-        let position = self.position;
-        while self.is_letter() {
+        let positon = self.position;
+        while (self.ch.is_ascii_alphabetic() || self.ch == b'_'){
+            self.read_char()
+        };
+        return String::from_utf8_lossy(&self.input[positon..self.position]).to_string();
+    }
+
+    pub fn skip_whitespace(&mut self){
+        while self.ch.is_ascii_whitespace() {
             self.read_char();
         }
-
-        self.input
-            .chars()
-            .skip(position)
-            .take(self.position - position)
-            .collect()
     }
 
-    pub fn peek_char(&mut self) -> char{
-        if self.read_position >= self.input.len(){
-            return '\0';
-        }else{
-            return self.input.as_bytes()[self.read_position] as char;
+    pub fn read_int(&mut self)-> String{
+        let pos = self.position;
+        while self.ch.is_ascii_digit() {
+            self.read_char();
         }
-
-
+        return String::from_utf8_lossy(&self.input[pos..self.position]).to_string();
     }
 
-    pub fn next_token(&mut self) -> Token {
-        let mut tok = Token {
-            kind: TokenKind::EOF,
-            value: self.input.clone(),
-        };
 
-        self.skip_white_space();
+        
+    pub fn next_token(&mut self) -> Result<Token> {
 
-        match self.ch {
-            '(' => {
-                tok.kind = TokenKind::Lparen;
-                tok.value = self.ch.to_string()
-            }
-            ')' => {
-                tok.kind = TokenKind::Rparen;
-                tok.value = self.ch.to_string();
-            }
-            '{' => {
-                tok.kind = TokenKind::Lbrace;
-                tok.value = self.ch.to_string();
-            }
-            '}' => {
-                tok.kind = TokenKind::Rbrace;
-                tok.value = self.ch.to_string();
-            }
-            '+' => {
-                tok.kind = TokenKind::Plus;
-                tok.value = self.ch.to_string();
-            }
-            '=' => {
-                if self.peek_char() == '=' {
-                    self.read_char();
-                    tok.value = "==".to_owned();
-                    tok.kind = TokenKind::EQ;
+        self.skip_whitespace();
+        //self.skip_whitespace();
+        let tok = match self.ch {
+            b'{' => Token{Type: TokenType::LSquirly, Literal: self.ch.to_string()} ,
+            b'}' => Token{Type: TokenType::RSquirly, Literal: self.ch.to_string()} ,
+            b'(' => Token{Type: TokenType::Lparen, Literal: self.ch.to_string()} ,
+            b')' => Token{Type: TokenType::Rparen, Literal: self.ch.to_string()} ,
+            b'<' => Token{Type: TokenType::LessThan, Literal: self.ch.to_string()} ,
+            b'>' => Token{Type: TokenType::GreaterThan, Literal: self.ch.to_string()} ,
+            b'=' =>  Token{Type: TokenType::Equal, Literal: self.ch.to_string()} ,
+            b',' => Token{Type: TokenType::Comma, Literal: self.ch.to_string()} ,
+            b';' => Token{Type: TokenType::Semicolon, Literal: self.ch.to_string()} ,
+            b'+' => Token{Type: TokenType::Plus, Literal: self.ch.to_string()} ,
+            b'-' => Token{Type: TokenType::Minus, Literal: self.ch.to_string()} ,
+            b'*' => Token{Type: TokenType::Asterisk, Literal: self.ch.to_string()} ,
+            b'/' => Token{Type: TokenType::ForwardSlash, Literal: self.ch.to_string()} ,
+            0 =>  Token{Type: TokenType::Eof, Literal: self.ch.to_string()},
+            b'0'..=b'9' => Token{ Type: TokenType::Int, Literal: self.read_int()},
+            _ => {if(self.ch.is_ascii_alphabetic() || self.ch == b'_') {
+                    Token{Type: TokenType::Ident, Literal: self.read_identifier()}
                 }else{
-                    tok.kind = TokenKind::Assign;
-                    tok.value = self.ch.to_string();
-                } 
-            }
-            ';' => {
-                tok.kind = TokenKind::Semicolon;
-                tok.value = self.ch.to_string();
-            }
-            ',' => {
-                tok.kind = TokenKind::Comma;
-                tok.value = self.ch.to_string();
-            }
-            '!' =>{
-                if self.peek_char() == '!' {
-                    self.read_char();
-                    tok.value = "!=".to_owned();
-                    tok.kind = TokenKind::NotEq;
-                }else{
-                    tok.kind = TokenKind::Bang;
-                    tok.value = self.ch.to_string();
-                } 
-            }
-            '\0' => {
-                tok.kind = TokenKind::EOF;
-                tok.value = "".to_string();
-            }
-            _ => {
-                if self.is_letter() {
-                    {
-                        tok.value = self.read_identifier();
-                        tok.kind = TokenKind::from(tok.value.as_str());
-                    }
-                } else if self.is_digit() {
-                    {
-                        tok.value = self.read_number();
-                        tok.kind = TokenKind::Int;
-                    }
-                }else {
-                    {
-                        tok.kind = TokenKind::Illegal;
-                        tok.value = self.ch.to_string();
-                    }
+                    Token{Type: TokenType::Illegal, Literal: self.ch.to_string()}
+
                 }
             }
-        }
+        };
 
-        self.read_char();
-        tok
+        Ok(tok)
     }
     
+
+
 }
+
 
 mod test {
     use super::Lexer;
-    use crate::token::{Token, TokenKind};
+    use crate::token::{Token, TokenType};
 
     #[test]
     fn test_next_token() {
         let input = String::from("=+(){},;");
         let expected = vec![
             Token {
-                kind: TokenKind::Assign,
-                value: "=".to_string(),
+                Type: TokenType::Assign,
+                Literal: "=".to_string(),
             },
             Token {
-                kind: TokenKind::Plus,
-                value: "+".to_string(),
+                Type: TokenType::Plus,
+                Literal: "+".to_string(),
             },
             Token {
-                kind: TokenKind::Lparen,
-                value: "(".to_string(),
+                Type: TokenType::Lparen,
+                Literal: "(".to_string(),
             },
             Token {
-                kind: TokenKind::Rparen,
-                value: ")".to_string(),
+                Type: TokenType::Rparen,
+                Literal: ")".to_string(),
             },
             Token {
-                kind: TokenKind::Lbrace,
-                value: "{".to_string(),
+                Type: TokenType::LSquirly,
+                Literal: "{".to_string(),
             },
             Token {
-                kind: TokenKind::Rbrace,
-                value: "}".to_string(),
+                Type: TokenType::RSquirly,
+                Literal: "}".to_string(),
             },
             Token {
-                kind: TokenKind::Comma,
-                value: ",".to_string(),
+                Type: TokenType::Comma,
+                Literal: ",".to_string(),
             },
             Token {
-                kind: TokenKind::Semicolon,
-                value: ";".to_string(),
+                Type: TokenType::Semicolon,
+                Literal: ";".to_string(),
             },
             Token {
-                kind: TokenKind::EOF,
-                value: "".to_string(),
+                Type: TokenType::Eof,
+                Literal: "".to_string(),
             },
         ];
 
@@ -220,35 +152,22 @@ mod test {
         //ask about this
         for (i, tt) in expected.iter().enumerate() {
 
-            let tok = l.next_token();
+            let tok = l.next_token().unwrap();
 
             assert_eq!(
-                tok.kind, tt.kind,
-                "Test[{}] - token kind wrong. expected={}, got={}",
-                i, tt.kind, tok.kind
+                tok.Type, tt.Type,
+                "Test[{}] - token Type wrong. expected={:?}, got={:?}",
+                i, tt.Type, tok.Type
             );
 
             assert_eq!(
-                tok.value, tt.value,
+                tok.Literal, tt.Literal,
                 "Test[{}] - literal wrong. expected={}, got={}",
-                i, tt.value, tok.value
+                i, tt.Literal, tok.Literal
             );
             
       
         }
-    }
-
-    #[test]
-    fn identifier_test() {
-        let input = "hello";
-        let expected = Token {
-            kind: TokenKind::Ident,
-            value: input.to_owned(),
-        };
-
-        let mut lexer = Lexer::new(input.to_owned());
-
-        assert_eq!(lexer.next_token(), expected);
     }
 
     #[test]
@@ -258,133 +177,135 @@ mod test {
         
         let ten = 10 ; 
         
-        let add = fn(x,y) 
+        let add = fn (x, y) 
         { x + y;
         
         } ;";
         let expected = vec![
         Token {
-            kind: TokenKind::Let,
-            value: "let".to_owned(),
+            Type: TokenType::Let,
+            Literal: "let".to_owned(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "five".to_string(),
+            Type: TokenType::Ident,
+            Literal: "five".to_string(),
         },
         Token {
-            kind: TokenKind::Assign,
-            value: "=".to_string(),
+            Type: TokenType::Assign,
+            Literal: "=".to_string(),
         },
         Token {
-            kind: TokenKind::Int,
-            value: "5".to_string(),
+            Type: TokenType::Int,
+            Literal: "5".to_string(),
         }, 
         Token {
-            kind: TokenKind::Semicolon,
-            value: ";".to_string(),
+            Type: TokenType::Semicolon,
+            Literal: ";".to_string(),
         },
         Token {
-            kind: TokenKind::Let,
-            value: "let".to_string(),
+            Type: TokenType::Let,
+            Literal: "let".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "ten".to_string(),
+            Type: TokenType::Ident,
+            Literal: "ten".to_string(),
         },
         Token {
-            kind: TokenKind::Assign,
-            value: "=".to_string(),
+            Type: TokenType::Assign,
+            Literal: "=".to_string(),
         },
         Token {
-            kind: TokenKind::Int,
-            value: "10".to_string(),
+            Type: TokenType::Int,
+            Literal: "10".to_string(),
         },
         Token {
-            kind: TokenKind::Semicolon,
-            value: ";".to_string(),
+            Type: TokenType::Semicolon,
+            Literal: ";".to_string(),
         },
         Token {
-            kind: TokenKind::Let,
-            value: "let".to_string(),
+            Type: TokenType::Let,
+            Literal: "let".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "add".to_string(),
+            Type: TokenType::Ident,
+            Literal: "add".to_string(),
         },
         Token {
-            kind: TokenKind::Assign,
-            value: "=".to_string(),
+            Type: TokenType::Assign,
+            Literal: "=".to_string(),
         },
         Token {
-            kind: TokenKind::Function,
-            value: "fn".to_string(),
+            Type: TokenType::Function,
+            Literal: "fn".to_string(),
         },
         Token {
-            kind: TokenKind::Lparen,
-            value: "(".to_string(),
+            Type: TokenType::Lparen,
+            Literal: "(".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "x".to_string(),
+            Type: TokenType::Ident,
+            Literal: "x".to_string(),
         },
         Token {
-            kind: TokenKind::Comma,
-            value: ",".to_string(),
+            Type: TokenType::Comma,
+            Literal: ",".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "y".to_string(),
+            Type: TokenType::Ident,
+            Literal: "y".to_string(),
         },
         Token {
-            kind: TokenKind::Rparen,
-            value: ")".to_string(),
+            Type: TokenType::Rparen,
+            Literal: ")".to_string(),
         },
         Token {
-            kind: TokenKind::Lbrace,
-            value: "{".to_string(),
+            Type: TokenType::LSquirly,
+            Literal: "{".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "x".to_string(),
+            Type: TokenType::Ident,
+            Literal: "x".to_string(),
         },
         Token {
-            kind: TokenKind::Plus,
-            value: "+".to_string(),
+            Type: TokenType::Plus,
+            Literal: "+".to_string(),
         },
         Token {
-            kind: TokenKind::Ident,
-            value: "y".to_string(),
+            Type: TokenType::Ident,
+            Literal: "y".to_string(),
         },
         Token {
-            kind: TokenKind::Semicolon,
-            value: ";".to_string(),
+            Type: TokenType::Semicolon,
+            Literal: ";".to_string(),
         },
         Token {
-            kind: TokenKind::Rbrace,
-            value: "}".to_string(),
+            Type: TokenType::RSquirly,
+            Literal: "}".to_string(),
         },
         Token {
-            kind: TokenKind::Semicolon,
-            value: ";".to_string(),
+            Type: TokenType::Semicolon,
+            Literal: ";".to_string(),
         }];
 
         let mut l = Lexer::new(input.to_owned());
 
-        //ask about this
         for (i, tt) in expected.iter().enumerate() {
 
-            let tok = l.next_token();
+            let mut tok = l.next_token().unwrap();
+
+            println!("{tok:?}");
 
             assert_eq!(
-                tok.kind, tt.kind,
-                "Test[{}] - token kind wrong. expected={}, got={}",
-                i, tt.kind, tok.kind
+                tok.Type, tt.Type,
+                "Test[{}] - token Type wrong. expected={:?}, got={:?}",
+                i, tt.Type, tok.Type
             );
 
+
             assert_eq!(
-                tok.value, tt.value,
+                tok.Literal, tt.Literal,
                 "Test[{}] - literal wrong. expected={}, got={}",
-                i, tt.value, tok.value
+                i, tt.Literal, tok.Literal
             );
             
         }
@@ -406,21 +327,20 @@ mod test {
     //         let tok = l.next_token();
 
     //         assert_eq!(
-    //             tok.kind, tt.kind,
-    //             "Test[{}] - token kind wrong. expected={}, got={}",
-    //             i, tt.kind, tok.kind
+    //             tok.Type, tt.Type,
+    //             "Test[{}] - token Type wrong. expected={}, got={}",
+    //             i, tt.Type, tok.Type
     //         );
 
     //         assert_eq!(
-    //             tok.value, tt.value,
+    //             tok.Literal, tt.Literal,
     //             "Test[{}] - literal wrong. expected={}, got={}",
-    //             i, tt.value, tok.value
+    //             i, tt.Literal, tok.Literal
     //         );
             
       
     //     }
 
     //}
-
 
 }
